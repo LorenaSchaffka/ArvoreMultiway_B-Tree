@@ -3,8 +3,8 @@
 // [x] inserirNoNo()    Inserção ordenada;	            Seção 4, p. 177
 // [x] removerDoNo()
 // [x] buscar()         Busca por comparações e filhos;	Figura 3, p. 177
-// [] inserir()         Falta Dividir nós após estouro
-// [] dividirNo()
+// [x]] inserir()         Falta Dividir nós após estouro
+// [x] dividirNo()
 // [] remover()
 
 
@@ -99,10 +99,50 @@ public class ArvoreB {
                 return;
         }
             inserirNoNo(atual, valor);
+
+            while (atual.quantidade > 4) {
+                if (nivel == 0) {
+                    dividirNo(atual, null, 0);
+                    return;
+                }
+                dividirNo(atual, caminho[nivel - 1], posicoes[nivel - 1]);
+                atual = caminho[nivel - 1];
+                nivel--;
+            }
+    }
+
+    void dividirNo(Node no, Node pai, int posicaoNoPai) {
+        Node novo = new Node();
+        novo.folha = no.folha;
+        int meio = no.chaves[2];
+
+        novo.chaves[0] = no.chaves[3];
+        novo.chaves[1] = no.chaves[4];
+        novo.quantidade = 2;
+        no.quantidade = 2;
+
+        if (!no.folha) {
+            novo.filhos[0] = no.filhos[3];
+            novo.filhos[1] = no.filhos[4];
+            novo.filhos[2] = no.filhos[5];
+        }
+        if (pai == null) {
+            Node novaRaiz = new Node();
+            novaRaiz.chaves[0] = meio;
+            novaRaiz.filhos[0] = no;
+            novaRaiz.filhos[1] = novo;
+            novaRaiz.quantidade = 1;
+            novaRaiz.folha = false;
+            raiz = novaRaiz;
+            return;
+        }
+
+        for (int i = pai.quantidade - 1; i >= posicaoNoPai; i--) {
+            pai.chaves[i + 1] = pai.chaves[i];
+            pai.filhos[i + 2] = pai.filhos[i + 1];
+        }
+        pai.chaves[posicaoNoPai] = meio;
+        pai.filhos[posicaoNoPai + 1] = novo;
+        pai.quantidade++;
     }
 }
-
-
-
-
-
