@@ -1,13 +1,13 @@
-// a fazer na ArvoreB:
+// Implementação baseada em:
+// BAYER, R.; McCREIGHT, E. Organization and maintenance of large ordered indexes.
+// Acta Informatica, v. 1, n. 3, p. 173-189, 1972.
 // [x] acharPosicao()   Chaves ordenadas;               Seção 3, p. 175
 // [x] inserirNoNo()    Inserção ordenada;	            Seção 4, p. 177
-// [x] removerDoNo()
+// [x] removerDoNo()    Remoção ordenada;	            Seção 6, Fig. 6, p. 181
 // [x] buscar()         Busca por comparações e filhos;	Figura 3, p. 177
-// [x]] inserir()         Falta Dividir nós após estouro
-// [x] dividirNo()
-// [x] remover()
-
-
+// [x] inserir()        Inserção com divisão;           Seção 4, Fig. 4, p. 177-178
+// [x] dividirNo()      Splitting a page;               Seção 4, p. 177-178
+// [x] remover()        Catenation e underflow;         Seção 6, Fig. 6, p. 180-182
 public class ArvoreB {
     Node raiz = null;
     final int k = 2;
@@ -40,7 +40,7 @@ public class ArvoreB {
         if (posicao >= no.quantidade || no.chaves[posicao] != valor) {
             return;
         }
-        for (int i =posicao; i < no.quantidade - 1; i++) {
+        for (int i = posicao; i < no.quantidade - 1; i++) {
             no.chaves[i] = no.chaves[i + 1];
         }
         no.quantidade--;
@@ -62,7 +62,6 @@ public class ArvoreB {
 
     }
 
-    // [] inserir()  incompleto falta o dividirNo pra fazer Dividir nós após estouro
     void inserir(int valor) {
         // verifica se ta vazio
         if (raiz == null) {
@@ -70,7 +69,7 @@ public class ArvoreB {
             inserirNoNo(raiz, valor);
             return;
         }
-        //percurso
+        // percurso
         Node atual = raiz;
         Node[] caminho = new Node[50];
         int[] posicoes = new int[50];
@@ -82,7 +81,8 @@ public class ArvoreB {
             if (posicao < atual.quantidade && atual.chaves[posicao] == valor) {
                 return;
             }
-            // Proteção contra estouro do vetor caminho ( caso limite de níveis seja excedido)
+            // Proteção contra estouro do vetor caminho ( caso limite de níveis seja
+            // excedido)
             if (nivel >= caminho.length) {
                 return;
             }
@@ -91,24 +91,24 @@ public class ArvoreB {
             atual = atual.filhos[posicao];
             nivel++;
         }
-            // Encontra a posição correta na folha
-            posicao = acharPosicao(atual, valor);
+        // Encontra a posição correta na folha
+        posicao = acharPosicao(atual, valor);
 
-            // precaução que impede a inserção de chaves duplicadas
-            if (posicao < atual.quantidade && atual.chaves[posicao] == valor) {
-                return;
+        // precaução que impede a inserção de chaves duplicadas
+        if (posicao < atual.quantidade && atual.chaves[posicao] == valor) {
+            return;
         }
-            inserirNoNo(atual, valor);
+        inserirNoNo(atual, valor);
 
-            while (atual.quantidade > 4) {
-                if (nivel == 0) {
-                    dividirNo(atual, null, 0);
-                    return;
-                }
-                dividirNo(atual, caminho[nivel - 1], posicoes[nivel - 1]);
-                atual = caminho[nivel - 1];
-                nivel--;
+        while (atual.quantidade > 4) {
+            if (nivel == 0) {
+                dividirNo(atual, null, 0);
+                return;
             }
+            dividirNo(atual, caminho[nivel - 1], posicoes[nivel - 1]);
+            atual = caminho[nivel - 1];
+            nivel--;
+        }
     }
 
     void dividirNo(Node no, Node pai, int posicaoNoPai) {
@@ -160,13 +160,11 @@ public class ArvoreB {
 
         while (!achou) {
             posicao = acharPosicao(atual, valor);
-            if  (posicao < atual.quantidade && atual.chaves[posicao] == valor) {
+            if (posicao < atual.quantidade && atual.chaves[posicao] == valor) {
                 achou = true;
-            }
-            else if (atual.folha) {
+            } else if (atual.folha) {
                 return;
-            }
-            else {
+            } else {
                 caminho[nivel] = atual;
                 posicoes[nivel] = posicao;
                 atual = atual.filhos[posicao];
@@ -206,39 +204,64 @@ public class ArvoreB {
                 esquerdo = pai.filhos[posicaoNoPai - 1];
                 direito = atual;
                 separador = posicaoNoPai - 1;
-            }
-            else {
+            } else {
                 esquerdo = atual;
                 direito = pai.filhos[posicaoNoPai + 1];
                 separador = 0;
             }
 
-            if (esquerdo.quantidade > k) {
-                for (int i = direito.quantidade - 1; i >= 0; i--) {
-                    direito.chaves[i + 1] = direito.chaves[i];
-                }
-                for (int i = direito.quantidade; i >= 0; i--) {
-                    direito.filhos[i + 1] = direito.filhos[i];
-                }
-                direito.chaves[0] = pai.chaves[separador];
-                direito.filhos[0] = esquerdo.filhos[esquerdo.quantidade];
-                pai.chaves[separador] = esquerdo.chaves[esquerdo.quantidade - 1];
-                direito.quantidade++;
-                esquerdo.quantidade--;
-            }
-            else if (direito.quantidade > k) {
-                esquerdo.chaves[esquerdo.quantidade] = pai.chaves[separador];
-                esquerdo.filhos[esquerdo.quantidade + 1] = direito.filhos[0];
-                pai.chaves[separador] = direito.chaves[0];
+            if (esquerdo.quantidade + direito.quantidade >= 2 * k) {
+                int[] chavesTemp = new int[6];
+                Node[] filhosTemp = new Node[7];
+                int total = 0;
 
-                for (int i = 0; i < direito.quantidade - 1; i++) {
-                    direito.chaves[i] = direito.chaves[i + 1];
+                for (int i = 0; i < esquerdo.quantidade; i++) {
+                    chavesTemp[total] = esquerdo.chaves[i];
+                    total++;
                 }
+
+                chavesTemp[total] = pai.chaves[separador];
+                total++;
+
                 for (int i = 0; i < direito.quantidade; i++) {
-                    direito.filhos[i] = direito.filhos[i + 1];
+                    chavesTemp[total] = direito.chaves[i];
+                    total++;
                 }
-                direito.quantidade--;
-                esquerdo.quantidade++;
+
+                int totalFilhos = 0;
+
+                for (int i = 0; i <= esquerdo.quantidade; i++) {
+                    filhosTemp[totalFilhos] = esquerdo.filhos[i];
+                    totalFilhos++;
+                }
+
+                for (int i = 0; i <= direito.quantidade; i++) {
+                    filhosTemp[totalFilhos] = direito.filhos[i];
+                    totalFilhos++;
+                }
+
+                int meio = total / 2;
+
+                for (int i = 0; i < meio; i++) {
+                    esquerdo.chaves[i] = chavesTemp[i];
+                }
+
+                for (int i = 0; i <= meio; i++) {
+                    esquerdo.filhos[i] = filhosTemp[i];
+                }
+
+                esquerdo.quantidade = meio;
+                pai.chaves[separador] = chavesTemp[meio];
+
+                for (int i = 0; i < total - meio - 1; i++) {
+                    direito.chaves[i] = chavesTemp[meio + 1 + i];
+                }
+
+                for (int i = 0; i <= total - meio - 1; i++) {
+                    direito.filhos[i] = filhosTemp[meio + 1 + i];
+                }
+
+                direito.quantidade = total - meio - 1;
             }
             else {
                 esquerdo.chaves[esquerdo.quantidade] = pai.chaves[separador];
@@ -262,12 +285,47 @@ public class ArvoreB {
             nivel--;
         }
         if (raiz.quantidade == 0) {
-            if  (raiz.folha) {
+            if (raiz.folha) {
                 raiz = null;
-            }
-            else {
+            } else {
                 raiz = raiz.filhos[0];
             }
+        }
+    }
+
+    void imprimir() {
+        if (raiz == null) {
+            System.out.println("Árvore vazia.");
+            return;
+        }
+        Node[] nivelAtual = new Node[100];
+        nivelAtual[0] = raiz;
+        int quantidadeAtual = 1;
+        int numeroNivel = 0;
+
+        while (quantidadeAtual > 0) {
+            Node[] proximoNivel = new Node[100];
+            int quantidadeProximoNivel = 0;
+            System.out.print("Nivel " + numeroNivel + ": ");
+
+            for (int i = 0; i < quantidadeAtual; i++) {
+                Node no = nivelAtual[i];
+                System.out.print("[");
+                for (int j = 0; j < no.quantidade; j++) {
+                    System.out.print(no.chaves[j] + " ");
+                }
+                System.out.print("] ");
+                if (!no.folha) {
+                    for (int j = 0; j <= no.quantidade; j++) {
+                        proximoNivel[quantidadeProximoNivel] = no.filhos[j];
+                        quantidadeProximoNivel++;
+                    }
+                }
+            }
+            System.out.println();
+            nivelAtual = proximoNivel;
+            quantidadeAtual = quantidadeProximoNivel;
+            numeroNivel++;
         }
     }
 }
