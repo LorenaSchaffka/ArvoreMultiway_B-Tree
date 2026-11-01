@@ -7,7 +7,8 @@
 // [x] buscar()         Busca por comparações e filhos;	Figura 3, p. 177
 // [x] inserir()        Inserção com divisão;           Seção 4, Fig. 4, p. 177-178
 // [x] dividirNo()      Splitting a page;               Seção 4, p. 177-178
-// [x] remover()        Catenation e underflow;         Seção 6, Fig. 6, p. 180-182; raiz: Seção 1, p. 174public class ArvoreB {
+// [x] remover()        Catenation e underflow;         Seção 6, Fig. 6, p. 180-182; raiz: Seção 1, p.174
+public class ArvoreB {
     Node raiz = null;
     final int k = 2;
 
