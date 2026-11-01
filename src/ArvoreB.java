@@ -5,7 +5,7 @@
 // [x] buscar()         Busca por comparações e filhos;	Figura 3, p. 177
 // [x]] inserir()         Falta Dividir nós após estouro
 // [x] dividirNo()
-// [] remover()
+// [x] remover()
 
 
 public class ArvoreB {
@@ -144,5 +144,130 @@ public class ArvoreB {
         pai.chaves[posicaoNoPai] = meio;
         pai.filhos[posicaoNoPai + 1] = novo;
         pai.quantidade++;
+    }
+
+    void remover(int valor) {
+        if (raiz == null) {
+            return;
+        }
+        Node atual = raiz;
+        Node[] caminho = new Node[50];
+        int[] posicoes = new int[50];
+        int nivel = 0;
+        int posicao = 0;
+
+        boolean achou = false;
+
+        while (!achou) {
+            posicao = acharPosicao(atual, valor);
+            if  (posicao < atual.quantidade && atual.chaves[posicao] == valor) {
+                achou = true;
+            }
+            else if (atual.folha) {
+                return;
+            }
+            else {
+                caminho[nivel] = atual;
+                posicoes[nivel] = posicao;
+                atual = atual.filhos[posicao];
+                nivel++;
+            }
+        }
+
+        if (atual.folha) {
+            removerDoNo(atual, valor);
+        }
+
+        else {
+            Node noDaChave = atual;
+            caminho[nivel] = atual;
+            posicoes[nivel] = posicao + 1;
+            atual = atual.filhos[posicao + 1];
+            nivel++;
+
+            while (!atual.folha) {
+                caminho[nivel] = atual;
+                posicoes[nivel] = 0;
+                atual = atual.filhos[0];
+                nivel++;
+            }
+            noDaChave.chaves[posicao] = atual.chaves[0];
+            removerDoNo(atual, atual.chaves[0]);
+        }
+
+        while (nivel > 0 && atual.quantidade < k) {
+            Node pai = caminho[nivel - 1];
+            int posicaoNoPai = posicoes[nivel - 1];
+            Node esquerdo;
+            Node direito;
+            int separador;
+
+            if (posicaoNoPai > 0) {
+                esquerdo = pai.filhos[posicaoNoPai - 1];
+                direito = atual;
+                separador = posicaoNoPai - 1;
+            }
+            else {
+                esquerdo = atual;
+                direito = pai.filhos[posicaoNoPai + 1];
+                separador = 0;
+            }
+
+            if (esquerdo.quantidade > k) {
+                for (int i = direito.quantidade - 1; i >= 0; i--) {
+                    direito.chaves[i + 1] = direito.chaves[i];
+                }
+                for (int i = direito.quantidade; i >= 0; i--) {
+                    direito.filhos[i + 1] = direito.filhos[i];
+                }
+                direito.chaves[0] = pai.chaves[separador];
+                direito.filhos[0] = esquerdo.filhos[esquerdo.quantidade];
+                pai.chaves[separador] = esquerdo.chaves[esquerdo.quantidade - 1];
+                direito.quantidade++;
+                esquerdo.quantidade--;
+            }
+            else if (direito.quantidade > k) {
+                esquerdo.chaves[esquerdo.quantidade] = pai.chaves[separador];
+                esquerdo.filhos[esquerdo.quantidade + 1] = direito.filhos[0];
+                pai.chaves[separador] = direito.chaves[0];
+
+                for (int i = 0; i < direito.quantidade - 1; i++) {
+                    direito.chaves[i] = direito.chaves[i + 1];
+                }
+                for (int i = 0; i < direito.quantidade; i++) {
+                    direito.filhos[i] = direito.filhos[i + 1];
+                }
+                direito.quantidade--;
+                esquerdo.quantidade++;
+            }
+            else {
+                esquerdo.chaves[esquerdo.quantidade] = pai.chaves[separador];
+                for (int i = 0; i < direito.quantidade; i++) {
+                    esquerdo.chaves[esquerdo.quantidade + 1 + i] = direito.chaves[i];
+                }
+
+                for (int i = 0; i <= direito.quantidade; i++) {
+                    esquerdo.filhos[esquerdo.quantidade + 1 + i] = direito.filhos[i];
+                }
+
+                esquerdo.quantidade = esquerdo.quantidade + 1 + direito.quantidade;
+
+                for (int i = separador; i < pai.quantidade - 1; i++) {
+                    pai.chaves[i] = pai.chaves[i + 1];
+                    pai.filhos[i + 1] = pai.filhos[i + 2];
+                }
+                pai.quantidade--;
+            }
+            atual = pai;
+            nivel--;
+        }
+        if (raiz.quantidade == 0) {
+            if  (raiz.folha) {
+                raiz = null;
+            }
+            else {
+                raiz = raiz.filhos[0];
+            }
+        }
     }
 }
